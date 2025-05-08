@@ -7,6 +7,9 @@
  *   - Fixed sprintf() aliasing issue in serve_static(), and clienterror().
  */
 #include "csapp.h"
+#include <signal.h>    // 터미널 종료 시그널 함수 추가
+#include <string.h>    // sigemptyset을 위해 추가
+#include <errno.h>     // 추가: errno 사용을 위해
 
 void doit(int fd); // 클라이언트 요청 처리
 void read_requesthdrs(rio_t *rp); // HTTP 요청 헤더 모두 읽기
@@ -16,6 +19,12 @@ void get_filetype(char *filename, char *filetype); // 파일 타입 결정
 void serve_dynamic(int fd, char *filename, char *cgiargs); // CGI 이용 동적 콘텐츠 전송
 void clienterror(int fd, char *cause, char *errnum, char *shortmsg,
                  char *longmsg); // HTTP 오류 응답 전송
+
+// 서버 종료용 시그널 핸들러 추가
+void sigint_handler(int signo) {  // SIGINT 시 호출되는 함수
+    _exit(0);
+}
+
 
 // 프로그램 진입점: 인자 처리 및 서버 소켓 준비
 int main(int argc, char **argv) {
@@ -29,18 +38,32 @@ int main(int argc, char **argv) {
         fprintf(stderr, "usage: %s <port>\n", argv[0]); // 포트 번호 미입력 시 사용법 출력
         exit(1); // 프로그램 종료
     }
+    
+    struct sigaction action;
+    action.sa_handler = sigint_handler;
+    sigemptyset(&action.sa_mask);
+    action.sa_flags = 0;
+    sigaction(SIGINT, &action, NULL);
 
+    
     listenfd = Open_listenfd(argv[1]); // 서버 듣기 소켓 생성 및 바인딩
-    while (1) {
+    while (1) { // SIGINT 전달 시 종료
         clientlen = sizeof(clientaddr); // 클라이언트 주소 길이 초기화
-        connfd = Accept(listenfd, (SA *)&clientaddr,
-                        &clientlen);  // (SA*): sockaddr로의 강제 형변환
+        int tempfd;
+        tempfd = accept(listenfd, (SA *)&clientaddr, &clientlen);
+        if (tempfd < 0) {
+            if (errno == EINTR) continue;
+            continue;
+        }
+        connfd = tempfd;
         Getnameinfo((SA *)&clientaddr, clientlen, hostname, MAXLINE, 
                     port, MAXLINE,0); // 클라이언트 호스트명과 포트 정보 얻기
         printf("Accepted connection from (%s, %s)\n", hostname, port); // 연결 정보 출력
         doit(connfd);   // 클라이언트 요청 처리 함수 호출
         Close(connfd);  // 연결 소켓 닫기
-  }
+    }
+    Close(listenfd);
+    return 0;
 }
 
 // 클라이언트 요청을 처리하는 함수

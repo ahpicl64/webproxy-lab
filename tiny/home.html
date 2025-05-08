@@ -7,8 +7,22 @@
     <title>Document</title>
 </head>
 <body> 
-    <p><a href="/cgi-bin/time">현재 서버 시간 보기</a></p>
-<img align="middle" src="godzilla.gif">
-Dave O'Hallaron
+    <h2>이름을 입력하세요</h2>
+    <form method="get" action="/cgi-bin/hello.py" target="result">
+        이름: <input type="text" name="name">
+        <input type="submit" value="확인">
+    </form>
+    <iframe name="result" width="500" height="100"></iframe>
+    <h2>요청 링크 보러가기</h2>
+    <form action="/cgi-bin/hello.py" method="get">
+        이름: <input type="text" name="name">
+        <input type="submit" value="확인">
+    </form>
+    <h2>현재 서버 시간</h2>
+    <iframe src="/cgi-bin/time" style="border:none; width:100%; height:50px;"></iframe>
+    <h2>방문자 수</h2>
+    <iframe src="/cgi-bin/counter" style="border:none; width:100%; height:50px;"></iframe>
+    <!-- <img align="middle" src="godzilla.gif"> -->
+    <!-- Dave O'Hallaron -->
 </body>
 </html>
