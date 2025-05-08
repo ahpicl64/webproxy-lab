@@ -8,6 +8,6 @@ int main(void) {
     // HTTP 응답 헤더
     printf("Content-Type: text/plain\r\n\r\n");
     // 본문: 현재 시간
-    printf("Current server time is: %s", s);
+    printf("현재 서버 시간은: %s", s);
     return 0;
 }
